@@ -510,13 +510,13 @@ fn main() -> anyhow::Result<()> {
             {
                 if matches!(
                     key.code,
-                    crossterm::event::KeyCode::Down | crossterm::event::KeyCode::Char('j')
+                    crossterm::event::KeyCode::Down | crossterm::event::KeyCode::Char('k')
                 ) {
                     app.down_released_since_arm = true;
                 }
                 if matches!(
                     key.code,
-                    crossterm::event::KeyCode::Up | crossterm::event::KeyCode::Char('k')
+                    crossterm::event::KeyCode::Up | crossterm::event::KeyCode::Char('j')
                 ) {
                     app.up_released_since_arm = true;
                 }
@@ -648,7 +648,7 @@ fn main() -> anyhow::Result<()> {
                                 app.focus_pane_right();
                                 continue;
                             }
-                            crossterm::event::KeyCode::Char('k') => {
+                            crossterm::event::KeyCode::Char('j') => {
                                 if app.focused_panel == app::FocusedPanel::Comments {
                                     app.focused_panel = app::FocusedPanel::FileList;
                                 } else if app.has_inline_commit_selector() {
@@ -656,7 +656,7 @@ fn main() -> anyhow::Result<()> {
                                 }
                                 continue;
                             }
-                            crossterm::event::KeyCode::Char('j') => {
+                            crossterm::event::KeyCode::Char('k') => {
                                 if app.focused_panel == app::FocusedPanel::FileList
                                     && app.has_comment_navigator_items()
                                 {
