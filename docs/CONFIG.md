@@ -41,6 +41,10 @@ editor = "nvim"
 comment_vim = false
 q_quits = false
 comment_tab_width = 4
+
+[comment_vim_keys]
+H = "0"
+L = "$"
 wrap = false
 wrap_style = "flow"
 relative_line_numbers = false
@@ -107,6 +111,7 @@ session_header = true
 | `comment_vim`              | `false`      | Vim modal editing in the comment box; toggle at runtime with `:vim`. When off, default emacs/readline bindings.                                            |
 | `q_quits`                  | `false`      | Restore bare `q` as a quit key in review modes. `:q`, `ZZ`, and `ZQ` work regardless of this setting.                                                     |
 | `comment_tab_width`        | `4`          | Spaces inserted by Tab while typing in the vim comment box (Insert mode).                                                                                  |
+| `[comment_vim_keys]`       | `{}`         | Key remaps for the vim comment box Normal mode. Each entry maps a source char to a target char (e.g. `H = "0"`, `L = "$"`).                               |
 | `wrap`                     | `false`      | Line wrap in the diff view. Toggle with `:set wrap!`.                                                                                                      |
 | `wrap_style`               | `flow`       | Where wrapped unified diff rows continue: `flow` wraps from the left edge, `gutter` keeps wrapped content after the line-number gutter, leaving continuation rows without a line number or change bar. |
 | `relative_line_numbers`    | `false`      | Show gutter numbers as rendered-row distances from the cursor. Toggle with `:set relativenumber!`.                                                         |

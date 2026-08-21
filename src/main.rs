@@ -371,6 +371,9 @@ fn main() -> anyhow::Result<()> {
         if cfg.wrap_style.as_deref() == Some("gutter") {
             app.wrap_style = app::WrapStyle::Gutter;
         }
+        if let Some(keys) = cfg.comment_vim_keys.clone() {
+            app.comment_vim_keys = keys;
+        }
         app.relative_line_numbers = cfg.relative_line_numbers.unwrap_or(false);
         // Open in single-file view when the user opts in. Pristine
         // `--all-files` already turned it on inside `App::new`, so we
@@ -935,6 +938,18 @@ fn dispatch_action(app: &mut App, action: Action) {
     }
 }
 
+/// Parse a config key string (single char) into a crossterm KeyEvent.
+/// Returns `None` for unrecognised strings.
+fn parse_vim_key_string(s: &str) -> Option<crossterm::event::KeyEvent> {
+    use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+    let mut chars = s.chars();
+    let c = chars.next()?;
+    if chars.next().is_some() {
+        return None; // only single chars supported
+    }
+    Some(KeyEvent::new(KeyCode::Char(c), KeyModifiers::NONE))
+}
+
 /// Handle a comment-mode key while vim is active: app-level keys keep their
 /// semantics, everything else feeds the overlay. Always returns `true`.
 fn handle_comment_vim_key(app: &mut App, key: crossterm::event::KeyEvent) -> bool {
@@ -994,6 +1009,26 @@ fn handle_comment_vim_key(app: &mut App, key: crossterm::event::KeyEvent) -> boo
     }
     // Any other key breaks a pending double-press sequence.
     app.comment_vim_reset_pending();
+
+    // In Normal mode, apply user-configured key remaps before the edtui dispatch.
+    let key = if normal {
+        if let KeyCode::Char(c) = key.code {
+            let src = c.to_string();
+            if let Some(target) = app.comment_vim_keys.get(&src).cloned() {
+                if let Some(remapped) = parse_vim_key_string(&target) {
+                    remapped
+                } else {
+                    key
+                }
+            } else {
+                key
+            }
+        } else {
+            key
+        }
+    } else {
+        key
+    };
 
     match key.code {
         // Save shortcut in any mode (Ctrl-C cancel is handled earlier).

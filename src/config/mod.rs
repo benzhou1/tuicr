@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use std::collections::HashMap;
 use std::fs;
 use std::io::ErrorKind;
 use std::path::{Path, PathBuf};
@@ -231,6 +232,15 @@ pub struct AppConfig {
     /// `[export]` section settings. `None` means "no override"; downstream
     /// code should treat it as `ExportConfig::default()`.
     pub export: Option<ExportConfig>,
+    /// Key remaps for the vim comment box. Each entry maps a source key
+    /// (single char, e.g. `"H"`) to a target key (`"0"`). Only applies in
+    /// Normal mode. Example:
+    /// ```toml
+    /// [comment_vim_keys]
+    /// H = "0"
+    /// L = "$"
+    /// ```
+    pub comment_vim_keys: Option<HashMap<String, String>>,
 }
 
 impl AppConfig {
@@ -290,6 +300,7 @@ const KNOWN_KEYS: &[&str] = &[
     "username",
     "forge",
     "export",
+    "comment_vim_keys",
 ];
 
 const FORGE_KNOWN_KEYS: &[&str] = &["comment_type_prefix"];
@@ -644,6 +655,13 @@ fn load_config_from_path(path: &Path) -> Result<ConfigLoadOutcome> {
         export: table
             .get("export")
             .and_then(|v| parse_export(v, &mut warnings)),
+        comment_vim_keys: table.get("comment_vim_keys").and_then(|v| {
+            v.as_table().map(|t| {
+                t.iter()
+                    .filter_map(|(k, val)| val.as_str().map(|s| (k.clone(), s.to_owned())))
+                    .collect()
+            })
+        }),
     };
 
     for key in table.keys() {
