@@ -48,10 +48,13 @@ impl App {
         self.comment_vim_command.is_some()
     }
 
-    /// Plain Enter in vim Normal mode: arm Save, or save on the second
-    /// consecutive press (like `:w`).
+    /// Plain Enter in vim Normal mode: arm Save if `comment_vim_confirm_save`
+    /// is enabled (the default), or save immediately when it is disabled.
     pub fn comment_vim_enter_normal(&mut self) {
-        if self.comment_vim_pending == CommentVimPending::Save {
+        if !self.comment_vim_confirm_save {
+            self.comment_vim_pending = CommentVimPending::None;
+            self.save_comment();
+        } else if self.comment_vim_pending == CommentVimPending::Save {
             self.comment_vim_pending = CommentVimPending::None;
             self.save_comment();
         } else {

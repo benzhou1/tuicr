@@ -1217,6 +1217,9 @@ pub struct App {
     pub comment_vim_enabled: bool,
     /// Config `q_quits`: restore bare `q` as a quit key in review modes.
     pub q_quits: bool,
+    /// Config `comment_vim_confirm_save`: require a second Enter press to save
+    /// in vim Normal mode. Defaults to `true`.
+    pub comment_vim_confirm_save: bool,
     /// Spaces inserted by Tab while typing in the vim comment box (config
     /// `comment_tab_width`, default 4).
     pub comment_tab_width: usize,

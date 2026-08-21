@@ -206,6 +206,10 @@ pub struct AppConfig {
     /// Restore the legacy bare `q` quit binding in review modes.
     /// Defaults to false.
     pub q_quits: Option<bool>,
+    /// When `comment_vim` is enabled, require a second Enter press in Normal
+    /// mode to confirm save (the default behaviour). Set to `false` to save
+    /// immediately on the first Enter. Defaults to `true`.
+    pub comment_vim_confirm_save: Option<bool>,
     /// Number of spaces inserted by Tab while typing in the vim comment box.
     /// Defaults to 4 (matching diff tab expansion).
     pub comment_tab_width: Option<usize>,
@@ -292,6 +296,7 @@ const KNOWN_KEYS: &[&str] = &[
     "mouse",
     "comment_vim",
     "q_quits",
+    "comment_vim_confirm_save",
     "comment_tab_width",
     "leader",
     "editor",
@@ -644,6 +649,7 @@ fn load_config_from_path(path: &Path) -> Result<ConfigLoadOutcome> {
         mouse: read_bool(table, "mouse", &mut warnings),
         comment_vim: read_bool(table, "comment_vim", &mut warnings),
         q_quits: read_bool(table, "q_quits", &mut warnings),
+        comment_vim_confirm_save: read_bool(table, "comment_vim_confirm_save", &mut warnings),
         comment_tab_width: read_usize(table, "comment_tab_width", &mut warnings),
         leader: read_leader(table, &mut warnings),
         editor: read_string(table, "editor", &mut warnings),
