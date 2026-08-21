@@ -349,9 +349,13 @@ impl App {
             }
 
             if adjust_cursor {
-                let header_line = self.calculate_file_scroll_offset(file_idx);
-                self.diff_state.cursor_line = header_line;
-                self.ensure_cursor_visible();
+                if self.should_collapse_file(file_idx) {
+                    self.next_file();
+                } else {
+                    let header_line = self.calculate_file_scroll_offset(file_idx);
+                    self.diff_state.cursor_line = header_line;
+                    self.ensure_cursor_visible();
+                }
             }
         }
     }
