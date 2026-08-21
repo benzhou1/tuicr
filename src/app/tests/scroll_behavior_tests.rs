@@ -749,3 +749,59 @@ fn cursor_down_with_stale_cursor_past_end_does_not_underflow() {
         "cursor should be clamped to the current max line"
     );
 }
+
+#[test]
+fn scroll_center_centers_viewport_on_cursor_down() {
+    // 20-line content, 10-line viewport. cursor starts at 0.
+    let mut app = build_scroll_app(10, 20, 0);
+    app.scroll_center = true;
+    app.diff_state.viewport_height = 10;
+
+    app.cursor_down(5);
+
+    let cursor = app.diff_state.cursor_line;
+    let scroll = app.diff_state.scroll_offset;
+    // cursor should be within ±1 of the viewport midpoint
+    let mid = scroll + app.diff_state.viewport_height / 2;
+    assert!(
+        cursor.abs_diff(mid) <= 1,
+        "cursor {cursor} should be near viewport midpoint {mid} (scroll={scroll})"
+    );
+}
+
+#[test]
+fn scroll_center_centers_viewport_on_cursor_up() {
+    // 20-line content, 10-line viewport. cursor starts at 15.
+    let mut app = build_scroll_app(10, 20, 0);
+    app.scroll_center = true;
+    app.diff_state.viewport_height = 10;
+    app.diff_state.cursor_line = 15;
+    app.diff_state.scroll_offset = 10;
+
+    app.cursor_up(5);
+
+    let cursor = app.diff_state.cursor_line;
+    let scroll = app.diff_state.scroll_offset;
+    let mid = scroll + app.diff_state.viewport_height / 2;
+    assert!(
+        cursor.abs_diff(mid) <= 1,
+        "cursor {cursor} should be near viewport midpoint {mid} (scroll={scroll})"
+    );
+}
+
+#[test]
+fn scroll_center_centers_viewport_on_page_down() {
+    let mut app = build_scroll_app(10, 40, 0);
+    app.scroll_center = true;
+    app.diff_state.viewport_height = 10;
+
+    app.page_down(10);
+
+    let cursor = app.diff_state.cursor_line;
+    let scroll = app.diff_state.scroll_offset;
+    let mid = scroll + app.diff_state.viewport_height / 2;
+    assert!(
+        cursor.abs_diff(mid) <= 1,
+        "cursor {cursor} should be near viewport midpoint {mid} (scroll={scroll})"
+    );
+}

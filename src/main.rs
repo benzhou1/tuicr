@@ -371,6 +371,7 @@ fn main() -> anyhow::Result<()> {
         if cfg.wrap_style.as_deref() == Some("gutter") {
             app.wrap_style = app::WrapStyle::Gutter;
         }
+        app.scroll_center = cfg.scroll_center.unwrap_or(false);
         if let Some(keys) = cfg.comment_vim_keys.clone() {
             app.comment_vim_keys = keys;
         }

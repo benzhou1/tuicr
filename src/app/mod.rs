@@ -1181,6 +1181,9 @@ pub struct App {
     /// new/right). Drives the `▶` caret placement and the side a new line
     /// comment attaches to. Ignored in unified view. Defaults to `New`.
     pub cursor_side: LineSide,
+    /// When true, every cursor motion centers the viewport on the cursor
+    /// (vim `scrolloff=999` behavior). Set via `scroll_center` in config.
+    pub scroll_center: bool,
     /// Key remaps for the vim comment box Normal mode. Maps source char
     /// strings to target char strings (e.g. `"H" -> "0"`).
     pub comment_vim_keys: std::collections::HashMap<String, String>,

@@ -494,6 +494,7 @@ impl App {
             relative_line_numbers: false,
             wrap_style: WrapStyle::default(),
             cursor_side: LineSide::New,
+            scroll_center: false,
             comment_vim_keys: std::collections::HashMap::new(),
             file_list_state: FileListState::default(),
             comment_navigator_state: CommentNavigatorState::default(),

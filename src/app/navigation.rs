@@ -29,7 +29,7 @@ impl App {
                     let new_max = self.max_cursor_line();
                     self.diff_state.cursor_line =
                         (new_top + overflow.saturating_sub(1)).min(new_max);
-                    self.ensure_cursor_visible();
+                    self.ensure_cursor_visible_or_center();
                     return;
                 }
                 self.primed_walk_next = false;
@@ -38,7 +38,7 @@ impl App {
                 self.primed_walk_next = true;
                 self.down_released_since_arm = false;
                 self.diff_state.cursor_line = max_line;
-                self.ensure_cursor_visible();
+                self.ensure_cursor_visible_or_center();
                 return;
             }
         } else if target != prev_cursor {
@@ -50,7 +50,7 @@ impl App {
             // Nothing caps how far the scroll moves. When lines wrap, one
             // logical line covers several rows, so a single `j` can need a
             // multi-row jump to bring the cursor back into view.
-            self.ensure_cursor_visible();
+            self.ensure_cursor_visible_or_center();
         }
         self.update_current_file_from_cursor();
     }
@@ -76,31 +76,20 @@ impl App {
                     let new_max = self.max_cursor_line();
                     self.diff_state.cursor_line =
                         new_max.saturating_sub(underflow.saturating_sub(1));
-                    self.ensure_cursor_visible();
+                    self.ensure_cursor_visible_or_center();
                     return;
                 }
                 self.primed_walk_prev = true;
                 self.up_released_since_arm = false;
                 self.diff_state.cursor_line = file_top;
-                self.ensure_cursor_visible();
+                self.ensure_cursor_visible_or_center();
                 return;
             }
             self.primed_walk_prev = false;
             self.up_released_since_arm = false;
         }
         self.diff_state.cursor_line = self.diff_state.cursor_line.saturating_sub(lines);
-        let visible_lines = self.diff_state.effective_visible_lines();
-        let scroll_margin = self.diff_state.effective_scroll_margin(self.scroll_offset);
-        // Enforce top margin
-        if self.diff_state.cursor_line < self.diff_state.scroll_offset + scroll_margin {
-            self.diff_state.scroll_offset =
-                self.diff_state.cursor_line.saturating_sub(scroll_margin);
-        }
-        // Ensure cursor is at least within the viewport (no bottom margin enforcement,
-        // just basic visibility — handles viewport shrink or wrap-mode changes).
-        if self.diff_state.cursor_line >= self.diff_state.scroll_offset + visible_lines {
-            self.diff_state.scroll_offset = self.diff_state.cursor_line - visible_lines + 1;
-        }
+        self.ensure_cursor_visible_or_center();
         self.update_current_file_from_cursor();
     }
 
@@ -115,7 +104,7 @@ impl App {
             max_line,
         );
         self.diff_state.scroll_offset = (self.diff_state.scroll_offset + lines).min(max_scroll);
-        self.ensure_cursor_visible();
+        self.ensure_cursor_visible_or_center();
         self.update_current_file_from_cursor();
     }
 
@@ -125,7 +114,7 @@ impl App {
         self.diff_state.cursor_line =
             skip_decoration_backward(&self.line_annotations, self.diff_state.cursor_line);
         self.diff_state.scroll_offset = self.diff_state.scroll_offset.saturating_sub(lines);
-        self.ensure_cursor_visible();
+        self.ensure_cursor_visible_or_center();
         self.update_current_file_from_cursor();
     }
 
@@ -193,6 +182,7 @@ impl App {
         }
 
         self.diff_state.cursor_line = cursor;
+        self.ensure_cursor_visible_or_center();
         self.update_current_file_from_cursor();
     }
 
@@ -345,6 +335,16 @@ impl App {
         {
             self.diff_state.scroll_offset =
                 (self.diff_state.cursor_line + bottom_margin - visible_lines + 1).min(max_scroll);
+        }
+    }
+
+    /// Centers the viewport on the cursor when `scroll_center` is enabled,
+    /// otherwise falls back to the margin-based `ensure_cursor_visible`.
+    pub(in crate::app) fn ensure_cursor_visible_or_center(&mut self) {
+        if self.scroll_center {
+            self.center_cursor();
+        } else {
+            self.ensure_cursor_visible();
         }
     }
 
@@ -835,8 +835,12 @@ impl App {
                 self.diff_state.cursor_line,
                 self.line_annotations.len().saturating_sub(1),
             );
-            let max_scroll = self.max_scroll_offset();
-            self.diff_state.scroll_offset = self.diff_state.cursor_line.min(max_scroll);
+            if self.scroll_center {
+                self.center_cursor();
+            } else {
+                let max_scroll = self.max_scroll_offset();
+                self.diff_state.scroll_offset = self.diff_state.cursor_line.min(max_scroll);
+            }
 
             let file_path = self.diff_files[idx].display_path().clone();
             let mut current = file_path.parent();
@@ -877,6 +881,7 @@ impl App {
         if self.diff_state.cursor_line < self.review_comments_render_height() {
             if !self.diff_files.is_empty() {
                 self.jump_to_file(0);
+                self.ensure_cursor_visible_or_center();
             }
             return;
         }
@@ -888,6 +893,7 @@ impl App {
                 && *file_idx > current_file_idx
             {
                 self.jump_to_file(*file_idx);
+                self.ensure_cursor_visible_or_center();
                 return;
             }
         }
@@ -902,6 +908,7 @@ impl App {
                 && *file_idx < current_file_idx
             {
                 self.jump_to_file(*file_idx);
+                self.ensure_cursor_visible_or_center();
                 return;
             }
         }
@@ -943,7 +950,7 @@ impl App {
         for pos in self.hunk_positions() {
             if pos > self.diff_state.cursor_line {
                 self.diff_state.cursor_line = pos;
-                self.ensure_cursor_visible();
+                self.ensure_cursor_visible_or_center();
                 self.update_current_file_from_cursor();
                 return;
             }
@@ -960,7 +967,7 @@ impl App {
                 self.jump_to_file(next_idx);
                 if let Some(&first) = self.hunk_positions().first() {
                     self.diff_state.cursor_line = first;
-                    self.ensure_cursor_visible();
+                    self.ensure_cursor_visible_or_center();
                     self.update_current_file_from_cursor();
                 }
             }
@@ -976,7 +983,7 @@ impl App {
         for &pos in positions.iter().rev() {
             if pos < self.diff_state.cursor_line {
                 self.diff_state.cursor_line = pos;
-                self.ensure_cursor_visible();
+                self.ensure_cursor_visible_or_center();
                 self.update_current_file_from_cursor();
                 return;
             }
@@ -992,13 +999,13 @@ impl App {
             self.jump_to_file(prev_idx);
             if let Some(&last) = self.hunk_positions().last() {
                 self.diff_state.cursor_line = last;
-                self.ensure_cursor_visible();
+                self.ensure_cursor_visible_or_center();
                 self.update_current_file_from_cursor();
                 return;
             }
         }
         self.diff_state.cursor_line = 0;
-        self.ensure_cursor_visible();
+        self.ensure_cursor_visible_or_center();
         self.update_current_file_from_cursor();
     }
 

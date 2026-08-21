@@ -218,6 +218,10 @@ pub struct AppConfig {
     /// pull-request reviews and `--all-files` mode.
     pub diff_watch_interval_ms: Option<usize>,
     pub no_update_check: Option<bool>,
+    /// When true, cursor motions center the viewport on the cursor instead of
+    /// using the scroll margin. Equivalent to vim's `scrolloff=999`. Defaults
+    /// to false.
+    pub scroll_center: Option<bool>,
     /// Render single-file and pristine views in full-width mode by default.
     /// Pristine `--all-files` mode already defaults to true regardless of
     /// this setting. Defaults to false.
@@ -296,6 +300,7 @@ const KNOWN_KEYS: &[&str] = &[
     "review_watch_interval_ms",
     "diff_watch_interval_ms",
     "no_update_check",
+    "scroll_center",
     "single_file_view",
     "username",
     "forge",
@@ -647,6 +652,7 @@ fn load_config_from_path(path: &Path) -> Result<ConfigLoadOutcome> {
         review_watch_interval_ms: read_usize(table, "review_watch_interval_ms", &mut warnings),
         diff_watch_interval_ms: read_usize(table, "diff_watch_interval_ms", &mut warnings),
         no_update_check: read_bool(table, "no_update_check", &mut warnings),
+        scroll_center: read_bool(table, "scroll_center", &mut warnings),
         single_file_view: read_bool(table, "single_file_view", &mut warnings),
         username: read_string(table, "username", &mut warnings),
         forge: table
